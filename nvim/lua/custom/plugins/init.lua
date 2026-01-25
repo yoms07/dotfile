@@ -166,4 +166,14 @@ return {
       { '<leader>lg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
     },
   },
+  {
+    'karb94/neoscroll.nvim',
+    opts = {},
+    config = function()
+      require('neoscroll').setup {
+        hide_cursor = true,
+        easing = 'quadratic',
+      }
+    end,
+  },
 }
