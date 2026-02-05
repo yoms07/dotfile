@@ -7,14 +7,28 @@ return {
     'nvim-tree/nvim-tree.lua',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
-      require('nvim-tree').setup {}
+      require('nvim-tree').setup {
+        sync_root_with_cwd = true,
+        respect_buf_cwd = true,
+        update_focused_file = {
+          enable = true,
+          update_root = true,
+        },
+      }
       vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle [E]xplorer' })
     end,
   },
   {
     'akinsho/toggleterm.nvim',
     version = '*',
-    config = true,
+    config = function()
+      require('toggleterm').setup {
+        open_mapping = [[<c-\]],
+        hide_number = true,
+        shade_terminal = true,
+        close_on_exit = true,
+      }
+    end,
   },
   {
     'stevearc/conform.nvim',
@@ -32,8 +46,8 @@ return {
         -- Add this line to link Prettierd to your JS/TS files
         javascript = { 'prettierd' },
         typescript = { 'prettierd' },
-        typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
-        javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        typescriptreact = { 'prettierd', 'eslint_d' },
+        javascriptreact = { 'prettierd', 'eslint_d' },
       },
     },
     cmd = 'ConformInfo',
@@ -49,17 +63,48 @@ return {
     },
   },
   {
+    'folke/persistence.nvim',
+    event = 'BufReadPre', -- Loads only when you start opening files
+    opts = {
+      -- This keeps your session files organized in Neovim's state folder
+      dir = vim.fn.expand(vim.fn.stdpath 'state' .. '/sessions/'),
+      options = { 'buffers', 'curdir', 'tabpages', 'winsize' },
+    },
+  },
+  {
     'goolord/alpha-nvim',
-    -- dependencies = { 'nvim-mini/mini.icons' },
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
-      local startify = require 'alpha.themes.startify'
-      -- available: devicons, mini, default is mini
-      -- if provider not loaded and enabled is true, it will try to use another provider
-      startify.file_icons.provider = 'devicons'
-      require('alpha').setup(startify.config)
+      local alpha = require 'alpha'
+      local dashboard = require 'alpha.themes.dashboard'
+
+      -- Set header (your existing header or a custom one)
+      dashboard.section.header.val = {
+        '███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗',
+        '████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║',
+        '██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║',
+        '██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║',
+        '██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║',
+        '╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝',
+      }
+
+      dashboard.section.buttons.val = {
+        dashboard.button('e', '  New file', ':ene <BAR> startinsert <CR>'),
+        dashboard.button('f', '󰈞  Find file', ':Telescope find_files<CR>'),
+        dashboard.button('r', '󰄉  Recent files', ':Telescope oldfiles<CR>'),
+
+        -- SESSION BUTTONS
+        dashboard.button('s', '  Restore Current Dir Session', [[<cmd>lua require("persistence").load()<cr>]]),
+        dashboard.button('l', '󰚰  Restore Last Session', [[<cmd>lua require("persistence").load({ last = true })<cr>]]),
+
+        dashboard.button('c', '  Config', ':e $MYVIMRC <CR>'),
+        dashboard.button('q', '  Quit', ':qa<CR>'),
+      }
+
+      alpha.setup(dashboard.opts)
     end,
   },
+
   {
     'akinsho/bufferline.nvim',
     version = '*',
@@ -69,6 +114,14 @@ return {
         mode = 'tabs',
         show_buffer_close_icons = false,
         show_close_icon = false,
+        offsets = {
+          {
+            filetype = 'NvimTree',
+            text = 'File Explorer',
+            padding = 1,
+            separator = true,
+          },
+        },
       },
     },
   },
@@ -96,7 +149,7 @@ return {
       { 'folke/snacks.nvim', opts = { input = {}, picker = {}, terminal = {} } },
     },
     config = function()
-      ---@type opencode.Opts
+      ---@type opencode.opts
       vim.g.opencode_opts = {
         -- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition" on the type or field.
       }
@@ -175,5 +228,67 @@ return {
         easing = 'quadratic',
       }
     end,
+  },
+  {
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' }, -- if you use the mini.nvim suite
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.icons' },        -- if you use standalone mini plugins
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
+    ---@module 'render-markdown'
+    ---@type render.md.UserConfig
+    opts = {},
+  },
+  {
+    'rebelot/kanagawa.nvim',
+    config = function()
+      require('kanagawa').setup {
+        vim.cmd.colorscheme 'kanagawa',
+      }
+    end,
+  },
+  {
+    'xiyaowong/transparent.nvim',
+    config = function()
+      require('transparent').setup {
+        extra_groups = {
+          'NormalFloat', -- plugins like telescope or cmp
+          'NvimTreeNormal', -- sidebars
+        },
+      }
+    end,
+  },
+  {
+    'windwp/nvim-ts-autotag',
+    config = function()
+      require('nvim-ts-autotag').setup {
+        opts = {
+          -- Defaults
+          enable_close = true, -- Auto close tags
+          enable_rename = true, -- Auto rename pairs of tags
+          enable_close_on_slash = false, -- Auto close on trailing </
+        },
+        -- Also override individual filetype configs, these take priority.
+        -- Empty by default, useful if one of the "opts" global settings
+        -- doesn't work well in a specific filetype
+        per_filetype = {
+          ['html'] = {
+            enable_close = false,
+          },
+        },
+      }
+    end,
+  },
+  {
+    'github/copilot.vim',
+    config = function() end,
+  },
+  { 'wakatime/vim-wakatime', lazy = false },
+  {
+    'b0o/incline.nvim',
+    config = function()
+      require('incline').setup()
+    end,
+    -- Optional: Lazy load Incline
+    event = 'VeryLazy',
   },
 }
