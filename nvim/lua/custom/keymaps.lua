@@ -7,8 +7,9 @@ vim.opt.wrap = true
 vim.opt.linebreak = true
 vim.opt.breakindent = true
 vim.opt.relativenumber = true
+vim.opt.nu = true
 
-vim.opt.winbar = '%#WinBar# %f %m %= %y '
+-- vim.opt.winbar = '%#WinBar# %f %m %= %y '
 
 vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'

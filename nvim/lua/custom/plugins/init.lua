@@ -31,38 +31,6 @@ return {
     end,
   },
   {
-    'stevearc/conform.nvim',
-    dependencies = { 'mason.nvim' },
-    lazy = true,
-
-    opts = {
-      notify_on_error = false,
-      format_on_save = {
-        timeout_ms = 500,
-        lsp_fallback = true,
-      },
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Add this line to link Prettierd to your JS/TS files
-        javascript = { 'prettierd' },
-        typescript = { 'prettierd' },
-        typescriptreact = { 'prettierd', 'eslint_d' },
-        javascriptreact = { 'prettierd', 'eslint_d' },
-      },
-    },
-    cmd = 'ConformInfo',
-    keys = {
-      {
-        '<leader>cF',
-        function()
-          require('conform').format { formatters = { 'injected' }, timeout_ms = 3000 }
-        end,
-        mode = { 'n', 'x' },
-        desc = 'Format Injected Langs',
-      },
-    },
-  },
-  {
     'folke/persistence.nvim',
     event = 'BufReadPre', -- Loads only when you start opening files
     opts = {
@@ -259,20 +227,34 @@ return {
   },
   {
     'windwp/nvim-ts-autotag',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    event = 'InsertEnter',
+    ft = {
+      'html',
+      'javascript',
+      'typescript',
+      'javascriptreact',
+      'typescriptreact',
+      'xml',
+      'tsx',
+      'jsx',
+    },
     config = function()
       require('nvim-ts-autotag').setup {
         opts = {
-          -- Defaults
           enable_close = true, -- Auto close tags
           enable_rename = true, -- Auto rename pairs of tags
-          enable_close_on_slash = false, -- Auto close on trailing </
+          enable_close_on_slash = true, -- Auto close on trailing </
         },
-        -- Also override individual filetype configs, these take priority.
-        -- Empty by default, useful if one of the "opts" global settings
-        -- doesn't work well in a specific filetype
         per_filetype = {
           ['html'] = {
-            enable_close = false,
+            enable_close = true,
+          },
+          ['typescriptreact'] = {
+            enable_close = true,
+          },
+          ['javascriptreact'] = {
+            enable_close = true,
           },
         },
       }
@@ -286,7 +268,29 @@ return {
   {
     'b0o/incline.nvim',
     config = function()
-      require('incline').setup()
+      local helpers = require 'incline.helpers'
+      local devicons = require 'nvim-web-devicons'
+      require('incline').setup {
+        window = {
+          padding = 0,
+          margin = { horizontal = 0 },
+        },
+        render = function(props)
+          local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(props.buf), ':t')
+          if filename == '' then
+            filename = '[No Name]'
+          end
+          local ft_icon, ft_color = devicons.get_icon_color(filename)
+          local modified = vim.bo[props.buf].modified
+          return {
+            ft_icon and { ' ', ft_icon, ' ', guibg = ft_color, guifg = helpers.contrast_color(ft_color) } or '',
+            ' ',
+            { filename, gui = modified and 'bold,italic' or 'bold' },
+            ' ',
+            guibg = '#44406e',
+          }
+        end,
+      }
     end,
     -- Optional: Lazy load Incline
     event = 'VeryLazy',
